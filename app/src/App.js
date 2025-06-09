@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 
@@ -24,21 +24,61 @@ function App() {
 
 
   const [countryData, setCountryData] = useState([]);
+  const [search, setSearch] = useState("");
+  const timer = useRef(null);
+  const [filteredCountry, setFilteredCountry] = useState([]);
 
 
+  const filter = (match) => {
 
+    // filter function for countries
+    // console.log("filter function started : ", match);
 
-  useState(() => {
+    // if search is empty
+    if(match === ""){
+      setFilteredCountry(countryData);
+    }
+    else{
+      // if search is not empty
+      console.log(typeof(match));
+      const data = countryData.filter((country) => country.common.toLowerCase().includes(match.toLowerCase()));
+      setFilteredCountry(data);
+    }
+    
 
-    const data = fetch(endpoint)
+  }
+
+  useEffect(() => {
+
+    fetch(endpoint)
       .then((data) => data.json())
-      .then(data => setCountryData(data))
+      .then(data => {
+        setCountryData(data);
+        setFilteredCountry(data);
+      })
       .catch(error => console.error("error while fetching : ", error));
       
       
   }, [])
 
-  // console.log("countryData >>", countryData);
+  // console.log("filtered country 1 >>", filteredCountry);
+
+  //for debouncing
+  useEffect(() => {
+
+    if(timer.current){
+      clearTimeout(timer.current);
+    }
+
+    timer.current = setTimeout(() => {
+      // console.log("handler called");
+      filter(search);
+    }, 500);
+
+    
+
+
+  }, [search, countryData])
 
   return (
     <div className="App">
@@ -48,6 +88,11 @@ function App() {
         justifyContent : "center"
       }}>
         <input 
+        value={search}
+        onChange={(e) => {
+          // console.log("search >>", e.target.value);
+          setSearch(e.target.value);
+        }}
         style={{
           width : "60%",
           padding : "10px",
@@ -58,7 +103,7 @@ function App() {
 
       <div className="countryContainer" >
         {
-          countryData.map((country, index) => <CountryCard key={index} image={country.png} name={country.common} />)
+          filteredCountry.map((country, index) => <CountryCard key={index} image={country.png} name={country.common} />)
         }
       </div>
 
